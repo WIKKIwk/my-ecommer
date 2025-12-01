@@ -53,7 +53,7 @@ export const categories: Category[] = [
         description:
           "Choyxona uslubidagi sho‘r osh, salatlar, qattiq non va shirinliklardan iborat to‘plam.",
         price: 504_000,
-        oldPrice: 574_000,
+        old_price: 574_000,
         image: baseImage("set-8"),
         options: [
           { id: 1, name: "Qo‘shimcha murch", price: 10_000 },
@@ -82,7 +82,7 @@ export const categories: Category[] = [
         description:
           "Qo‘y va mol go‘shtining mayinligi, hushbo‘y lazer guruchi va sariq sabzi uyg‘unligi.",
         price: 56_000,
-        oldPrice: 65_000,
+        old_price: 65_000,
         image: baseImage("toy-oshi"),
       },
       {

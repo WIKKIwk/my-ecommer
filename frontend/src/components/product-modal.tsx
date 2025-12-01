@@ -36,7 +36,7 @@ export function ProductModal({ product, open, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
       <div className="glass-panel flex w-full max-w-4xl gap-6 p-6">
         <div className="relative hidden min-h-[420px] flex-1 overflow-hidden rounded-3xl bg-neutral-100 lg:block">
-          <Image src={product.image} alt={product.name} fill className="object-cover" />
+          <Image src={product.image || '/placeholder.png'} alt={product.name} fill className="object-cover" />
         </div>
         <div className="flex flex-1 flex-col">
           <button type="button" onClick={onClose} className="self-end rounded-full border border-neutral-200 p-2 text-neutral-500">
@@ -56,11 +56,10 @@ export function ProductModal({ product, open, onClose }: Props) {
                       type="button"
                       key={option.id}
                       onClick={() => setSelectedOption(active ? undefined : option)}
-                      className={`rounded-full border px-4 py-2 text-sm font-semibold ${
-                        active
+                      className={`rounded-full border px-4 py-2 text-sm font-semibold ${active
                           ? "border-neutral-900 bg-neutral-900 text-white"
                           : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
-                      }`}
+                        }`}
                     >
                       {option.name} · {option.price.toLocaleString()} so‘m
                     </button>
