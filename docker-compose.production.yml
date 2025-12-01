@@ -104,6 +104,18 @@ services:
       - mini-app
     restart: unless-stopped
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: kamolon-cloudflare-tunnel
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    profiles:
+      - cloudflare
+
 volumes:
   postgres_data:
   redis_data:

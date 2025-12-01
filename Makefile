@@ -151,12 +151,31 @@ check-domain:
 			exit 1; \
 		fi \
 	fi
+	@if ! grep -q "CLOUDFLARE_TUNNEL_TOKEN=." .env; then \
+		echo ""; \
+		echo "🌥️  Cloudflare Tunnel (optional):"; \
+		echo "👉 Enter your Cloudflare Tunnel token (press Enter to skip):"; \
+		echo "   Get it from: https://one.dash.cloudflare.com"; \
+		read -p "   > " cf_token; \
+		if [ ! -z "$$cf_token" ]; then \
+			sed -i "s/CLOUDFLARE_TUNNEL_TOKEN=/CLOUDFLARE_TUNNEL_TOKEN=$$cf_token/" .env; \
+			echo "✅ Cloudflare Tunnel configured!"; \
+		else \
+			echo "⏭️  Skipping Cloudflare Tunnel (you can add it later to .env)"; \
+		fi \
+	fi
+
 
 # Production deployment
 prod-up: check-domain
 	@echo "🌐 Starting production services..."
 	@docker compose -f docker-compose.production.yml down --remove-orphans
-	@docker compose -f docker-compose.production.yml up -d --build
+	@if grep -q "CLOUDFLARE_TUNNEL_TOKEN=." .env && ! grep -q "CLOUDFLARE_TUNNEL_TOKEN=$$" .env; then \
+		echo "🌥️  Cloudflare Tunnel detected, activating tunnel..."; \
+		docker compose -f docker-compose.production.yml --profile cloudflare up -d --build; \
+	else \
+		docker compose -f docker-compose.production.yml up -d --build; \
+	fi
 	@sleep 10
 	@docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate
 	@docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
@@ -164,3 +183,4 @@ prod-up: check-domain
 	@echo "✅ Production services started!"
 	@echo "🔒 Don't forget to configure SSL certificates!"
 	@echo ""
+
