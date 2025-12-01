@@ -1,6 +1,10 @@
 .PHONY: up down restart logs clean setup migrate superuser help prod-up
 .DEFAULT_GOAL := help
 
+# Detect Docker Compose command (supports both old and new versions)
+DOCKER_COMPOSE := $(shell if command -v docker compose >/dev/null 2>&1; then echo "docker compose"; else echo "docker-compose"; fi)
+
+
 help:
 	@echo "🍜 Taomchi E-Commerce - Available Commands:"
 	@echo ""
@@ -56,19 +60,19 @@ setup:
 	fi
 	@echo ""
 	@echo "📋 Step 2/6: Stopping existing containers..."
-	@docker compose down --remove-orphans 2>/dev/null || true
+	@$(DOCKER_COMPOSE) down --remove-orphans 2>/dev/null || true
 	@echo ""
 	@echo "📋 Step 3/6: Building and starting containers..."
-	@docker compose up -d --build
+	@$(DOCKER_COMPOSE) up -d --build
 	@echo ""
 	@echo "📋 Step 4/6: Waiting for database to be ready..."
 	@sleep 10
 	@echo ""
 	@echo "📋 Step 5/6: Running database migrations..."
-	@docker compose exec -T backend python manage.py migrate
+	@$(DOCKER_COMPOSE) exec -T backend python manage.py migrate
 	@echo ""
 	@echo "📋 Step 6/6: Collecting static files..."
-	@docker compose exec -T backend python manage.py collectstatic --noinput
+	@$(DOCKER_COMPOSE) exec -T backend python manage.py collectstatic --noinput
 	@echo ""
 	@echo "✅ Setup complete!"
 	@echo ""
@@ -81,8 +85,8 @@ setup:
 # Start all services
 up:
 	@echo "🚀 Starting all services..."
-	@docker compose down --remove-orphans
-	@docker compose up -d --build
+	@$(DOCKER_COMPOSE) down --remove-orphans
+	@$(DOCKER_COMPOSE) up -d --build
 	@echo ""
 	@echo "✅ All services started!"
 	@echo ""
@@ -99,37 +103,37 @@ up:
 # Stop all services
 down:
 	@echo "🛑 Stopping all services..."
-	@docker compose down
+	@$(DOCKER_COMPOSE) down
 	@echo "✅ All services stopped!"
 
 # Restart all services
 restart:
 	@echo "🔄 Restarting all services..."
-	@docker compose restart
+	@$(DOCKER_COMPOSE) restart
 	@echo "✅ All services restarted!"
 
 # View logs
 logs:
 	@echo "📊 Viewing logs (Ctrl+C to exit)..."
-	@docker compose logs -f
+	@$(DOCKER_COMPOSE) logs -f
 
 # Clean everything
 clean:
 	@echo "🧹 Cleaning all containers, volumes, and images..."
-	@docker compose down -v --rmi all --remove-orphans
+	@$(DOCKER_COMPOSE) down -v --rmi all --remove-orphans
 	@echo "✅ Cleanup complete!"
 
 # Run migrations
 migrate:
 	@echo "🗄️  Running database migrations..."
-	@docker compose exec backend python manage.py makemigrations
-	@docker compose exec backend python manage.py migrate
+	@$(DOCKER_COMPOSE) exec backend python manage.py makemigrations
+	@$(DOCKER_COMPOSE) exec backend python manage.py migrate
 	@echo "✅ Migrations complete!"
 
 # Create superuser
 superuser:
 	@echo "👤 Creating superuser..."
-	@docker compose exec backend python manage.py createsuperuser
+	@$(DOCKER_COMPOSE) exec backend python manage.py createsuperuser
 
 # Check and configure domain
 check-domain:
@@ -169,16 +173,16 @@ check-domain:
 # Production deployment
 prod-up: check-domain
 	@echo "🌐 Starting production services..."
-	@docker compose -f docker-compose.production.yml down --remove-orphans
+	@$(DOCKER_COMPOSE) -f docker-compose.production.yml down --remove-orphans
 	@if grep -q "CLOUDFLARE_TUNNEL_TOKEN=." .env && ! grep -q "CLOUDFLARE_TUNNEL_TOKEN=$$" .env; then \
 		echo "🌥️  Cloudflare Tunnel detected, activating tunnel..."; \
-		docker compose -f docker-compose.production.yml --profile cloudflare up -d --build; \
+		$(DOCKER_COMPOSE) -f docker-compose.production.yml --profile cloudflare up -d --build; \
 	else \
-		docker compose -f docker-compose.production.yml up -d --build; \
+		$(DOCKER_COMPOSE) -f docker-compose.production.yml up -d --build; \
 	fi
 	@sleep 10
-	@docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate
-	@docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
+	@$(DOCKER_COMPOSE) -f docker-compose.production.yml exec -T backend python manage.py migrate
+	@$(DOCKER_COMPOSE) -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
 	@echo ""
 	@echo "✅ Production services started!"
 	@echo "🔒 Don't forget to configure SSL certificates!"
