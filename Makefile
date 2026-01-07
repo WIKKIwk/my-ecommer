@@ -143,83 +143,237 @@ deploy:
 
 # 🎯 Full Auto Setup (GitHub dan yuklab birinchi marta ishlatish uchun)
 setup:
-	@echo "🚀 Starting auto setup..."
+	@clear
 	@echo ""
-	@echo "📋 Step 1/6: Checking environment files..."
-	@if [ ! -f .env ]; then \
-		echo "  ⚙️  Creating .env from .env.example..."; \
-		cp .env.example .env; \
-		echo "  ✅ .env created"; \
+	@echo "$(PURPLE)   ╔══════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(PURPLE)   ║                                                              ║$(NC)"
+	@echo "$(PURPLE)   ║          $(CYAN)🚀 KAMOLON Auto Setup Wizard$(PURPLE)                      ║$(NC)"
+	@echo "$(PURPLE)   ║                                                              ║$(NC)"
+	@echo "$(PURPLE)   ╚══════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@sleep 0.5
+	@# Run setup.sh for automatic configuration
+	@if [ -f setup.sh ]; then \
+		echo "$(CYAN)   [1/6]$(NC) $(YELLOW)⚙️  Running automatic configuration...$(NC)"; \
+		chmod +x setup.sh; \
+		./setup.sh; \
+		echo "$(GREEN)   [1/6] ✓ Auto-configuration complete$(NC)"; \
 	else \
-		echo "  ✅ .env already exists"; \
+		echo "$(YELLOW)   ⚠️  setup.sh not found, using manual configuration...$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(CYAN)   [2/6]$(NC) $(YELLOW)📝 Checking environment files...$(NC)"
+	@if [ ! -f .env ]; then \
+		cp .env.example .env 2>/dev/null; \
+		echo "$(GREEN)   [2/6] ✓ Created .env$(NC)"; \
+	else \
+		echo "$(GREEN)   [2/6] ✓ .env already exists$(NC)"; \
 	fi
 	@if [ ! -f frontend/.env.local ]; then \
-		echo "  ⚙️  Creating frontend/.env.local..."; \
-		cp frontend/.env.example frontend/.env.local; \
-		echo "  ✅ frontend/.env.local created"; \
+		if [ -f frontend/.env.example ]; then \
+			cp frontend/.env.example frontend/.env.local; \
+		else \
+			echo "NEXT_PUBLIC_API_BASE_URL=http://localhost:8001/api" > frontend/.env.local; \
+			echo "NEXT_PUBLIC_MEDIA_BASE_URL=http://localhost:8001" >> frontend/.env.local; \
+		fi; \
+		echo "$(GREEN)        ✓ Created frontend/.env.local$(NC)"; \
 	else \
-		echo "  ✅ frontend/.env.local already exists"; \
+		echo "$(GREEN)        ✓ frontend/.env.local exists$(NC)"; \
 	fi
 	@if [ ! -f mini-app/.env ]; then \
-		echo "  ⚙️  Creating mini-app/.env..."; \
-		cp mini-app/.env.example mini-app/.env; \
-		echo "  ✅ mini-app/.env created"; \
+		if [ -f mini-app/.env.example ]; then \
+			cp mini-app/.env.example mini-app/.env; \
+		else \
+			echo "VITE_API_BASE_URL=http://localhost:8001/api" > mini-app/.env; \
+		fi; \
+		echo "$(GREEN)        ✓ Created mini-app/.env$(NC)"; \
 	else \
-		echo "  ✅ mini-app/.env already exists"; \
+		echo "$(GREEN)        ✓ mini-app/.env exists$(NC)"; \
 	fi
+	@sleep 0.3
 	@echo ""
-	@echo "📋 Step 2/6: Stopping existing containers..."
-	@$(DOCKER_COMPOSE) down --remove-orphans 2>/dev/null || true
+	@echo "$(CYAN)   [3/6]$(NC) $(YELLOW)🛑 Stopping existing containers...$(NC)"
+	@$(DOCKER_COMPOSE) down --remove-orphans >/dev/null 2>&1 || true
+	@echo "$(GREEN)   [3/6] ✓ Stopped$(NC)"
+	@sleep 0.3
 	@echo ""
-	@echo "📋 Step 3/6: Building and starting containers..."
-	@$(DOCKER_COMPOSE) up -d --build
+	@echo "$(CYAN)   [4/6]$(NC) $(YELLOW)🔨 Building and starting containers...$(NC)"
+	@$(DOCKER_COMPOSE) up -d --build >/tmp/setup-build.log 2>&1 & \
+	BUILD_PID=$$!; \
+	i=0; \
+	while kill -0 $$BUILD_PID 2>/dev/null; do \
+		i=$$((i + 1)); \
+		bars=$$((i % 30)); \
+		spaces=$$((30 - bars)); \
+		printf "\r$(CYAN)   [4/6]$(NC) $(YELLOW)🔨 Building$(NC) ["; \
+		printf "%0.s█" $$(seq 1 $$bars); \
+		printf "%0.s " $$(seq 1 $$spaces); \
+		printf "] "; \
+		spinner=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"); \
+		idx=$$((i % 10)); \
+		printf "$${spinner[idx]}"; \
+		sleep 0.1; \
+	done; \
+	wait $$BUILD_PID
+	@printf "\r$(GREEN)   [4/6] ✓ Containers built and started                              $(NC)\n"
+	@sleep 0.3
 	@echo ""
-	@echo "📋 Step 4/6: Waiting for database to be ready..."
-	@sleep 10
+	@echo "$(CYAN)   [5/6]$(NC) $(YELLOW)🗄️  Running database migrations...$(NC)"
+	@$(DOCKER_COMPOSE) exec -T backend python manage.py makemigrations >/dev/null 2>&1 || echo "$(YELLOW)        ⚠️  No new migrations$(NC)"
+	@$(DOCKER_COMPOSE) exec -T backend python manage.py migrate >/dev/null 2>&1
+	@echo "$(GREEN)   [5/6] ✓ Migrations applied$(NC)"
+	@sleep 0.3
 	@echo ""
-	@echo "📋 Step 5/6: Running database migrations..."
-	@$(DOCKER_COMPOSE) exec -T backend python manage.py migrate
+	@echo "$(CYAN)   [6/6]$(NC) $(YELLOW)📦 Collecting static files...$(NC)"
+	@$(DOCKER_COMPOSE) exec -T backend python manage.py collectstatic --noinput >/dev/null 2>&1
+	@echo "$(GREEN)   [6/6] ✓ Static files collected$(NC)"
+	@sleep 0.5
 	@echo ""
-	@echo "📋 Step 6/6: Collecting static files..."
-	@$(DOCKER_COMPOSE) exec -T backend python manage.py collectstatic --noinput
+	@echo "$(GREEN)   ╔══════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)   ║                                                              ║$(NC)"
+	@echo "$(GREEN)   ║              ✅ $(PURPLE)Setup Complete!$(GREEN)                               ║$(NC)"
+	@echo "$(GREEN)   ║                                                              ║$(NC)"
+	@echo "$(GREEN)   ╚══════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "✅ Setup complete!"
+	@echo "$(PURPLE)   🎉 Next Steps:$(NC)"
 	@echo ""
-	@echo "🎉 Next steps:"
-	@echo "  1. Create admin user:  make superuser"
-	@echo "  2. Visit frontend:     http://localhost:3000"
-	@echo "  3. Visit admin:        http://localhost:8001/admin/"
+	@echo "      $(CYAN)1.$(NC) Create admin user:  $(GREEN)make superuser$(NC)"
+	@echo "      $(CYAN)2.$(NC) Visit frontend:     $(GREEN)http://localhost:3000$(NC)"
+	@echo "      $(CYAN)3.$(NC) Visit admin panel:  $(GREEN)http://localhost:8001/admin/$(NC)"
+	@echo "      $(CYAN)4.$(NC) Visit mini-app:     $(GREEN)http://localhost:3001$(NC)"
 	@echo ""
+	@echo "$(PURPLE)   ───────────────────────────────────────────────────────────────$(NC)"
+	@echo ""
+
+
 
 # Start all services
 up:
-	@echo "🚀 Starting all services..."
-	@$(DOCKER_COMPOSE) down --remove-orphans
-	@$(DOCKER_COMPOSE) up -d --build
+	@clear
 	@echo ""
-	@echo "✅ All services started!"
+	@echo "$(PURPLE)   ╔══════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(PURPLE)   ║                                                              ║$(NC)"
+	@echo "$(PURPLE)   ║        $(CYAN)🍜 KAMOLON E-Commerce Platform$(PURPLE)                     ║$(NC)"
+	@echo "$(PURPLE)   ║                                                              ║$(NC)"
+	@echo "$(PURPLE)   ╚══════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "📍 Access URLs:"
-	@echo "  Frontend:  http://localhost:3000"
-	@echo "  Backend:   http://localhost:8001/api/"
-	@echo "  Admin:     http://localhost:8001/admin/"
-	@echo "  Mini-App:  http://localhost:3001"
+	@sleep 0.5
+	@# Step 1: Stop existing containers
+	@echo "$(CYAN)   [1/4]$(NC) $(YELLOW)⏳ Stopping existing containers...$(NC)"
+	@$(DOCKER_COMPOSE) down --remove-orphans >/dev/null 2>&1 || true
+	@printf "$(GREEN)   [1/4] ✓ Stopped existing containers$(NC)\n"
+	@sleep 0.3
 	@echo ""
-	@echo "📊 View logs:     make logs"
-	@echo "🛑 Stop services: make down"
+	@# Step 2: Building images with progress bar
+	@echo "$(CYAN)   [2/4]$(NC) $(YELLOW)🔨 Building Docker images...$(NC)"
+	@$(DOCKER_COMPOSE) build >/tmp/docker-build.log 2>&1 & \
+	BUILD_PID=$$!; \
+	i=0; \
+	while kill -0 $$BUILD_PID 2>/dev/null; do \
+		i=$$((i + 1)); \
+		bars=$$((i % 20)); \
+		spaces=$$((20 - bars)); \
+		printf "\r$(CYAN)   [2/4]$(NC) $(YELLOW)🔨 Building$(NC) ["; \
+		printf "%0.s█" $$(seq 1 $$bars); \
+		printf "%0.s " $$(seq 1 $$spaces); \
+		printf "] "; \
+		spinner=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"); \
+		idx=$$((i % 10)); \
+		printf "$${spinner[idx]}"; \
+		sleep 0.1; \
+	done; \
+	wait $$BUILD_PID; \
+	BUILD_EXIT=$$?; \
+	if [ $$BUILD_EXIT -eq 0 ]; then \
+		printf "\r$(GREEN)   [2/4] ✓ Docker images built successfully$(NC)                    \n"; \
+	else \
+		printf "\r$(RED)   [2/4] ✗ Build failed!$(NC)                                  \n"; \
+		tail -20 /tmp/docker-build.log; \
+		exit 1; \
+	fi
+	@sleep 0.3
 	@echo ""
+	@# Step 3: Starting services
+	@echo "$(CYAN)   [3/4]$(NC) $(YELLOW)🚀 Starting services...$(NC)"
+	@$(DOCKER_COMPOSE) up -d >/tmp/docker-start.log 2>&1 & \
+	START_PID=$$!; \
+	i=0; \
+	while kill -0 $$START_PID 2>/dev/null; do \
+		i=$$((i + 1)); \
+		bars=$$((i % 20)); \
+		spaces=$$((20 - bars)); \
+		printf "\r$(CYAN)   [3/4]$(NC) $(YELLOW)🚀 Starting$(NC) ["; \
+		printf "%0.s█" $$(seq 1 $$bars); \
+		printf "%0.s " $$(seq 1 $$spaces); \
+		printf "] "; \
+		spinner=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"); \
+		idx=$$((i % 10)); \
+		printf "$${spinner[idx]}"; \
+		sleep 0.1; \
+	done; \
+	wait $$START_PID
+	@printf "\r$(GREEN)   [3/4] ✓ Services started successfully$(NC)                       \n"
+	@sleep 0.3
+	@echo ""
+	@# Step 4: Health check with countdown
+	@echo "$(CYAN)   [4/4]$(NC) $(YELLOW)🔍 Waiting for services to be ready...$(NC)"
+	@for i in 3 2 1; do \
+		printf "\r$(CYAN)   [4/4]$(NC) $(YELLOW)🔍 Health check$(NC) ["; \
+		filled=$$((4 - i)); \
+		empty=$$i; \
+		printf "%0.s█" $$(seq 1 $$filled); \
+		printf "%0.s " $$(seq 1 $$empty); \
+		printf "] $$i seconds..."; \
+		sleep 1; \
+	done
+	@printf "\r$(GREEN)   [4/4] ✓ All services are healthy and ready!$(NC)                \n"
+	@sleep 0.5
+	@echo ""
+	@echo "$(GREEN)   ╔══════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)   ║                                                              ║$(NC)"
+	@echo "$(GREEN)   ║              ✅ $(PURPLE)Successfully Started!$(GREEN)                        ║$(NC)"
+	@echo "$(GREEN)   ║                                                              ║$(NC)"
+	@echo "$(GREEN)   ╚══════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@echo "$(PURPLE)   📍 Access Your Application:$(NC)"
+	@echo ""
+	@echo "      $(CYAN)🌐 Frontend:$(NC)   $(GREEN)http://localhost:3000$(NC)"
+	@echo "      $(CYAN)⚙️  Backend:$(NC)    $(GREEN)http://localhost:8001/api/$(NC)"
+	@echo "      $(CYAN)🔐 Admin:$(NC)       $(GREEN)http://localhost:8001/admin/$(NC)"
+	@echo "      $(CYAN)📱 Mini-App:$(NC)    $(GREEN)http://localhost:3001$(NC)"
+	@echo ""
+	@echo "$(YELLOW)   💡 Quick Commands:$(NC)"
+	@echo ""
+	@echo "      $(CYAN)make logs$(NC)       - View live logs"
+	@echo "      $(CYAN)make down$(NC)       - Stop all services"
+	@echo "      $(CYAN)make restart$(NC)    - Restart services"
+	@echo "      $(CYAN)make superuser$(NC)  - Create admin user"
+	@echo ""
+	@echo "$(PURPLE)   ───────────────────────────────────────────────────────────────$(NC)"
+	@echo ""
+
+
 
 # Stop all services
 down:
-	@echo "🛑 Stopping all services..."
-	@$(DOCKER_COMPOSE) down
-	@echo "✅ All services stopped!"
+	@echo ""
+	@echo "$(YELLOW)🛑 Stopping KAMOLON E-Commerce...$(NC)"
+	@$(DOCKER_COMPOSE) down >/dev/null 2>&1
+	@echo "$(GREEN)   ✓ All services stopped!$(NC)"
+	@echo ""
 
 # Restart all services
 restart:
-	@echo "🔄 Restarting all services..."
-	@$(DOCKER_COMPOSE) restart
-	@echo "✅ All services restarted!"
+	@echo ""
+	@echo "$(CYAN)🔄 Restarting KAMOLON E-Commerce...$(NC)"
+	@$(DOCKER_COMPOSE) restart >/dev/null 2>&1
+	@echo "$(GREEN)   ✓ All services restarted!$(NC)"
+	@echo ""
+	@echo "$(PURPLE)📍 Access URLs:$(NC)"
+	@echo "   $(CYAN)Frontend:$(NC)  $(GREEN)http://localhost:3000$(NC)"
+	@echo "   $(CYAN)Admin:$(NC)     $(GREEN)http://localhost:8001/admin/$(NC)"
+	@echo ""
+
 
 # View logs
 logs:
@@ -228,9 +382,38 @@ logs:
 
 # Clean everything
 clean:
-	@echo "🧹 Cleaning all containers, volumes, and images..."
-	@$(DOCKER_COMPOSE) down -v --rmi all --remove-orphans
-	@echo "✅ Cleanup complete!"
+	@echo ""
+	@echo "$(RED)   ╔══════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(RED)   ║                                                              ║$(NC)"
+	@echo "$(RED)   ║              🧹 $(YELLOW)Cleaning Everything...$(RED)                        ║$(NC)"
+	@echo "$(RED)   ║                                                              ║$(NC)"
+	@echo "$(RED)   ╚══════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@echo "$(YELLOW)   ⚠️  This will remove:$(NC)"
+	@echo "      - All containers"
+	@echo "      - All volumes (database data)"
+	@echo "      - All images"
+	@echo ""
+	@$(DOCKER_COMPOSE) down -v --rmi all --remove-orphans >/tmp/clean.log 2>&1 & \
+	CLEAN_PID=$$!; \
+	i=0; \
+	while kill -0 $$CLEAN_PID 2>/dev/null; do \
+		i=$$((i + 1)); \
+		bars=$$((i % 20)); \
+		spaces=$$((20 - bars)); \
+		printf "\r$(YELLOW)   🧹 Cleaning$(NC) ["; \
+		printf "%0.s█" $$(seq 1 $$bars); \
+		printf "%0.s " $$(seq 1 $$spaces); \
+		printf "] "; \
+		spinner=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"); \
+		idx=$$((i % 10)); \
+		printf "$${spinner[idx]}"; \
+		sleep 0.1; \
+	done; \
+	wait $$CLEAN_PID
+	@printf "\r$(GREEN)   ✓ Cleanup complete!                                    $(NC)\n"
+	@echo ""
+
 
 # Run migrations
 migrate:

@@ -7,21 +7,26 @@ Modern e-commerce platform for food delivery with Telegram Mini App integration.
 [![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-## 🚀 Quick Start (3 Commands!)
+## 🚀 Quick Start (One Command!)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/taomchi-app.git
-cd taomchi-app
+git clone https://github.com/WIKKIwk/Ecommer_web.git
+cd Ecommer_web
 make setup
 ```
 
-**That's it!** Visit http://localhost:3000 🎉
+**That's it!** Visit <http://localhost:3000> 🎉
+
+> **Note**: First run takes 2-3 minutes to build Docker images. Subsequent runs are much faster.
+>
+> Create admin user: `make superuser`
 
 ---
 
 ## 🎯 Features
 
 ### 🛒 E-Commerce
+
 - Product catalog with categories
 - Shopping cart management
 - Multi-branch support
@@ -30,12 +35,14 @@ make setup
 - SMS OTP authentication
 
 ### 📱 Telegram Mini App
+
 - Native Telegram integration
 - Real-time updates
 - PWA support
 - Mobile-first design
 
 ### ⚡ Performance
+
 - Database optimization with indexes
 - Gunicorn production server
 - Nginx reverse proxy with gzip
@@ -43,6 +50,7 @@ make setup
 - Image optimization (AVIF, WebP)
 
 ### 🔒 Security
+
 - Rate limiting (DDoS protection)
 - CORS configuration
 - Security headers
@@ -54,12 +62,14 @@ make setup
 ## 🏗️ Tech Stack
 
 ### Backend
+
 - **Framework:** Django 5.0.14 + Django REST Framework
 - **Database:** PostgreSQL 16
 - **Server:** Gunicorn + Nginx
 - **SMS:** Eskiz.uz integration
 
 ### Frontend
+
 - **Framework:** Next.js 16 (React 19)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4
@@ -67,12 +77,14 @@ make setup
 - **Maps:** Leaflet
 
 ### Mini-App
+
 - **Framework:** Vite + React 19
 - **State:** Zustand + TanStack Query
 - **Telegram:** TWA SDK
 - **Styling:** Tailwind CSS
 
 ### DevOps
+
 - **Containerization:** Docker + Docker Compose
 - **Reverse Proxy:** Nginx
 - **SSL:** Certbot (Let's Encrypt)
@@ -104,7 +116,7 @@ make superuser
 # That's it! 🎉
 ```
 
-### 📋 What `make setup` does automatically:
+### 📋 What `make setup` does automatically
 
 1. ✅ Creates `.env` files from examples (if not exist)
 2. ✅ Builds Docker containers
@@ -144,10 +156,10 @@ make superuser
 
 ### Access
 
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8001/api/
-- **Admin Panel:** http://localhost:8001/admin/
-- **Mini-App:** http://localhost:3001
+- **Frontend:** <http://localhost:3000>
+- **Backend API:** <http://localhost:8001/api/>
+- **Admin Panel:** <http://localhost:8001/admin/>
+- **Mini-App:** <http://localhost:3001>
 
 ---
 
@@ -422,6 +434,7 @@ This project is licensed under the MIT License.
 ## 👤 Author
 
 **Your Name**
+
 - GitHub: [@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
 
 ---
@@ -438,7 +451,8 @@ This project is licensed under the MIT License.
 ## 📞 Support
 
 For issues and questions:
-- 📧 Email: support@yourdomain.com
+
+- 📧 Email: <support@yourdomain.com>
 - 💬 Telegram: @your_telegram
 - 🐛 Issues: [GitHub Issues](https://github.com/YOUR_USERNAME/taomchi-app/issues)
 
