@@ -7,3 +7,10 @@ from .models import Category, Product, Cart, CartItem, Order, OrderItem
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'price', 'stock', 'available']
+    list_filter = ['category', 'available']
+    prepopulated_fields = {'slug': ('name',)}
