@@ -9,3 +9,19 @@ Modern e-commerce platform built with Django and Next.js.
 - Order management system
 - RESTful API with Django REST Framework
 - Modern responsive frontend with Next.js and Tailwind CSS
+
+## Tech Stack
+
+**Backend:**
+
+- Django 5.0
+- Django REST Framework
+- PostgreSQL 16
+- Docker
+
+**Frontend:**
+
+- Next.js 14
+- React 18
+- TypeScript
+- Tailwind CSS
