@@ -18,3 +18,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     lookup_field = 'slug'
 
+
+class CartViewSet(viewsets.ModelViewSet):
+    serializer_class = CartSerializer
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return Cart.objects.filter(user=self.request.user)
+        return Cart.objects.none()
+
+
