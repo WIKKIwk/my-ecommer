@@ -10,5 +10,20 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DB_NAME: shop2
+      DB_USER: shop2_user
+      DB_PASSWORD: shop2_password
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      - db
+
 volumes:
   postgres_data:
